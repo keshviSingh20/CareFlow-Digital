@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CareFlow - Digital AYUSH case-taking and patient record prototype" />
+  <title>CareFlow — AYUSH Case Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">C</div>
+        <div>
+          <div class="brand-name">CareFlow</div>
+          <div class="brand-subtitle">AYUSH Case Management</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
+        <button class="nav-item" data-view="patients"><span>♙</span> Patients</button>
+        <button class="nav-item" data-view="new-patient"><span>＋</span> New Patient</button>
+        <button class="nav-item" data-view="followups"><span>◷</span> Follow-ups</button>
+        <button class="nav-item" data-view="settings"><span>⚙</span> Settings</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="demo-card">
+          <span class="demo-dot"></span>
+          <div>
+            <strong>Demo Environment</strong>
+            <small>Local synthetic data only</small>
+          </div>
+        </div>
+        <button class="nav-item" id="resetDemoBtn"><span>↻</span> Reset Demo Data</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenuBtn" aria-label="Open menu">☰</button>
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="pageSubtitle">Overview of your practice records</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="demo-pill"><span></span> Prototype</div>
+          <button class="avatar" title="Practitioner profile">KS</button>
+        </div>
+      </header>
+
+      <div class="prototype-banner">
+        <div class="banner-icon">i</div>
+        <div><strong>Student prototype</strong> — CareFlow is a documentation and case-management prototype. Clinical decisions remain with the practitioner. Do not enter real patient data.</div>
+      </div>
+
+      <section class="content" id="app"></section>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="modal-backdrop hidden" id="modalBackdrop">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
