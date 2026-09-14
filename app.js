@@ -31,9 +31,9 @@ const prakritiQuestions = [
 ];
 
 const options = [
-  {label:"Option A", type:"vata"},
-  {label:"Option B", type:"pitta"},
-  {label:"Option C", type:"kapha"}
+  {label:"Response A", type:"vata"},
+  {label:"Response B", type:"pitta"},
+  {label:"Response C", type:"kapha"}
 ];
 
 const demoPatients = [
@@ -72,7 +72,9 @@ const state = {
   selectedPatient:null,
   search:"",
   settings:loadSettings(),
-  newPatientId:null
+  newPatientId:null,
+  selectedCaseId:null,
+  editingCaseId:null
 };
 
 function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
@@ -128,7 +130,7 @@ function navigate(view,patientId=null){
     dashboard:["Dashboard","Overview of your practice records"],
     patients:["Patients","Search and manage patient records"],
     "new-patient":["New Patient","Register a patient and begin a structured case"],
-    prakriti:["Prakriti Assessment","Prototype questionnaire — not clinically validated"],
+    prakriti:["Prakriti Assessment","Structured assessment prototype — clinical content requires verification"],
     "case-entry":["Case Entry","Capture structured consultation information"],
     summary:["Case Summary","Review the structured case record"],
     profile:["Patient Profile","Patient information, cases and follow-up timeline"],
@@ -201,23 +203,23 @@ function renderNewPatient(){
         <div class="field"><label>Age <span>*</span></label><input type="number" name="age" min="1" max="120" required placeholder="28" /></div>
         <div class="field"><label>Gender</label><select name="gender"><option>Female</option><option>Male</option><option>Other</option><option>Prefer not to say</option></select></div>
         <div class="field"><label>Phone <span>optional</span></label><input name="phone" inputmode="numeric" placeholder="9000000000" /></div>
-        <div class="field"><label>ABHA ID <span>optional — demo only</span></label><input name="abhaId" placeholder="Not required for prototype" /></div>
+        <div class="field"><label>ABHA ID <span>optional — fictional demo value only</span></label><input name="abhaId" placeholder="e.g. DEMO-ABHA-001" /></div>
       </div>
     </div>
     
-    <div class="form-actions"><button type="button" class="btn" data-action="dashboard">Cancel</button><button class="btn btn-primary">Create Patient & Continue →</button></div>
+    <div class="form-actions"><button type="button" class="btn" data-action="dashboard">Cancel</button><button class="btn btn-primary">Create Patient</button></div>
   </form></div>`;
 }
 
 function renderPrakriti(){
   const p=getPatient(state.selectedPatient);
   if(!p)return missingPatient();
-  return `<div class="page-head"><div><h2>Prakriti Assessment</h2><p>${esc(p.fullName)} · Prototype scoring for demonstration only</p></div><span class="badge badge-orange">Not clinically validated</span></div>
+  return `<div class="page-head"><div><h2>Prakriti Assessment</h2><p>${esc(p.fullName)} · Prototype assessment for demonstration only</p></div><span class="badge badge-orange">Not clinically validated</span></div>
     <div class="stepper"><div class="step active"><span class="step-circle">1</span> Registration</div><span class="step-line"></span><div class="step active"><span class="step-circle">2</span> Prakriti</div><span class="step-line"></span><div class="step"><span class="step-circle">3</span> Case</div><span class="step-line"></span><div class="step"><span class="step-circle">4</span> Summary</div></div>
-    <div class="card"><div class="card-body"><div class="prototype-banner" style="margin:0 0 18px">The questions below are placeholders for the software prototype. Replace them and verify scoring against authoritative AYUSH/academic sources before any real-world use.</div>
+    <div class="card"><div class="card-body"><div class="prototype-banner" style="margin:0 0 18px">This is a software prototype. The questionnaire content and scoring must be verified against an authoritative AYUSH/academic assessment tool before any real-world use. The current V1 result is for demonstration only.</div>
     <form id="prakritiForm"><div class="question-list">${prakritiQuestions.map((q,i)=>`
       <div class="question"><div class="question-title">${i+1}. ${q}</div><div class="options">${options.map(o=>`<div class="option"><input required type="radio" name="q${i}" id="q${i}_${o.type}" value="${o.type}"><label for="q${i}_${o.type}">${o.label}</label></div>`).join("")}</div></div>`).join("")}</div>
-    <div class="form-actions" style="margin:20px -17px -17px"><button type="button" class="btn" data-action="profile" data-id="${p.id}">Cancel</button><button class="btn btn-primary">Calculate Prototype Result →</button></div></form></div></div>`;
+    <div class="form-actions" style="margin:20px -17px -17px"><button type="button" class="btn" data-action="case-entry" data-id="${p.id}">Skip for now → Case Entry</button><button class="btn btn-primary">Calculate Prototype Result →</button></div></form></div></div>`;
 }
 
 function renderCaseEntry(){
@@ -228,7 +230,7 @@ function renderCaseEntry(){
   <div class="stepper"><div class="step active"><span class="step-circle">1</span> Registration</div><span class="step-line"></span><div class="step active"><span class="step-circle">2</span> Prakriti</div><span class="step-line"></span><div class="step active"><span class="step-circle">3</span> Case</div><span class="step-line"></span><div class="step"><span class="step-circle">4</span> Summary</div></div>
   <div class="card form-card"><form id="caseForm">
     <div class="form-section"><div class="section-title">Consultation</div><div class="form-grid"><div class="field full"><label>Chief Complaint <span>*</span></label><textarea name="chiefComplaint" required placeholder="Primary reason for consultation…">${esc(c?.chiefComplaint||"")}</textarea></div>
-      <div class="field full"><label>Symptoms / Concerns <span>*</span></label><div class="tag-list">${["Fatigue","Pain","Acidity","Bloating","Headache","Nasal congestion","Cough","Sleep difficulty","Stress","Irregular appetite","Skin concern","Other"].map(s=>`<div class="check-tag"><input type="checkbox" name="symptoms" value="${esc(s)}" id="sym_${s.replace(/\W/g,"")}"><label for="sym_${s.replace(/\W/g,"")}">${esc(s)}</label></div>`).join("")}</div></div>
+      <div class="field full"><label>Symptoms / Concerns <span>*</span></label><div class="tag-list">${["Fatigue","Pain","Acidity","Bloating","Headache","Nasal congestion","Cough","Sleep difficulty","Stress","Irregular appetite","Skin concern","Other"].map(s=>{const checked=(c?.symptoms||[]).includes(s)?" checked":"";return `<div class="check-tag"><input type="checkbox" name="symptoms" value="${esc(s)}" id="sym_${s.replace(/\W/g,"")}"${checked}><label for="sym_${s.replace(/\W/g,"")}">${esc(s)}</label></div>`;}).join("")}</div></div>
       <div class="field full"><label>Case History</label><textarea name="history" placeholder="Relevant history documented by practitioner…">${esc(c?.history||"")}</textarea></div>
     </div></div>
     <div class="form-section"><div class="section-title">AYUSH Case Information</div><div class="section-subtitle">Fields are intentionally generic until the team verifies the exact clinical data dictionary.</div>
@@ -274,7 +276,7 @@ function renderProfile(){
   const p=getPatient(state.selectedPatient);
   if(!p)return missingPatient();
   const cases=(p.cases||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
-  return `<div class="page-head"><div><h2>Patient Profile</h2><p>Longitudinal record and case history</p></div><div style="display:flex;gap:8px"><button class="btn" data-action="prakriti" data-id="${p.id}">Prakriti Assessment</button><button class="btn btn-primary" data-action="case-entry" data-id="${p.id}">＋ New Case</button></div></div>
+  return `<div class="page-head"><div><h2>Patient Profile</h2><p>Longitudinal record and case history</p></div><div style="display:flex;gap:8px"><button class="btn" data-action="prakriti" data-id="${p.id}">${p.prakriti ? "Reassess Prakriti" : "Start Prakriti Assessment"}</button><button class="btn btn-primary" data-action="start-case" data-id="${p.id}">＋ Start New Case</button></div></div>
     <div class="card"><div class="card-body"><div class="profile-head"><div class="profile-main"><div class="profile-avatar">${initials(p.fullName)}</div><div><div class="profile-name">${esc(p.fullName)}</div><div class="profile-meta">${p.age} years · ${esc(p.gender)} · ${esc(p.phone||"No phone")}</div></div></div><span class="badge badge-green">${esc(p.prakriti?.result||"Prakriti not assessed")}</span></div>
     <div class="tabs"><button class="tab active">Overview</button></div>
     <div class="summary-grid">
@@ -292,7 +294,7 @@ Vata ${p.prakriti?.vata??"—"}% · Pitta ${p.prakriti?.pitta??"—"}% · Kapha 
 function renderFollowups(){
   const db=getDB(), items=allFollowups(db);
   return `<div class="page-head"><div><h2>Follow-ups</h2><p>Track upcoming patient follow-up visits.</p></div></div>
-    <div class="card"><div class="card-body"><div class="table-wrap">${items.length?`<table class="table"><thead><tr><th>Patient</th><th>Date</th><th>Related Case</th><th>Status</th><th>Action</th></tr></thead><tbody>${items.map(f=>`<tr><td><div class="patient-cell"><div class="patient-avatar">${initials(f.patient.fullName)}</div><div><div class="patient-name">${esc(f.patient.fullName)}</div><div class="patient-meta">${f.patient.age} yrs · ${esc(f.patient.gender)}</div></div></div></td><td>${formatDate(f.date)}</td><td>${esc(latestCase(f.patient)?.chiefComplaint||"Case")}</td><td><span class="badge ${f.status==="Completed"?"badge-green":f.date<todayISO()?"badge-red":"badge-orange"}">${esc(f.date<todayISO()&&f.status!=="Completed"?"Overdue":f.status)}</span></td><td><button class="btn btn-sm" data-action="profile" data-id="${f.patient.id}">Open patient</button> ${f.status!=="Completed"?`<button class="btn btn-sm" data-complete-followup="${f.patient.id}" data-followup="${f.id}">Mark done</button>`:""}</td></tr>`).join("")}</tbody></table>`:emptyState("No follow-ups","Create a case with a follow-up date to populate this list.")}</div></div></div>`;
+    <div class="card"><div class="card-body"><div class="table-wrap">${items.length?`<table class="table"><thead><tr><th>Patient</th><th>Date</th><th>Related Case</th><th>Status</th><th>Action</th></tr></thead><tbody>${items.map(f=>`<tr><td><div class="patient-cell"><div class="patient-avatar">${initials(f.patient.fullName)}</div><div><div class="patient-name">${esc(f.patient.fullName)}</div><div class="patient-meta">${f.patient.age} yrs · ${esc(f.patient.gender)}</div></div></div></td><td>${formatDate(f.date)}</td><td>${esc((f.patient.cases||[]).find(c=>c.id===f.caseId)?.chiefComplaint||"Case")}</td><td><span class="badge ${f.status==="Completed"?"badge-green":f.date<todayISO()?"badge-red":"badge-orange"}">${esc(f.date<todayISO()&&f.status!=="Completed"?"Overdue":f.status)}</span></td><td><button class="btn btn-sm" data-action="profile" data-id="${f.patient.id}">Open patient</button> ${f.status!=="Completed"?`<button class="btn btn-sm" data-complete-followup="${f.patient.id}" data-followup="${f.id}">Mark done</button>`:""}</td></tr>`).join("")}</tbody></table>`:emptyState("No follow-ups","Create a case with a follow-up date to populate this list.")}</div></div></div>`;
 }
 
 function renderSettings(){
@@ -351,6 +353,7 @@ function handleAction(e){
   else if(action==="profile")navigate("profile",id);
   else if(action==="prakriti"){state.selectedPatient=id;navigate("prakriti",id);}
   else if(action==="case-entry"){state.selectedPatient=id;state.editingCaseId=null;navigate("case-entry",id);}
+  else if(action==="start-case"){state.selectedPatient=id;state.editingCaseId=null;state.selectedCaseId=null;navigate("prakriti",id);}
   else if(action==="summary"){state.selectedPatient=id;state.selectedCaseId=e.currentTarget.dataset.case;navigate("summary",id);}
   else if(action==="edit-case"){state.selectedPatient=id;state.editingCaseId=e.currentTarget.dataset.case;navigate("case-entry",id);}
 }
@@ -360,7 +363,7 @@ function handleNewPatient(e){
   const fd=new FormData(e.target);
   const db=getDB();
   const p={id:uid("p"),fullName:fd.get("fullName").trim(),age:Number(fd.get("age")),gender:fd.get("gender"),phone:fd.get("phone").trim(),abhaId:fd.get("abhaId").trim(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),prakriti:null,cases:[],followUps:[]};
-  db.patients.push(p);saveDB(db);state.selectedPatient=p.id;state.newPatientId=p.id;showToast("Patient created successfully");navigate("prakriti",p.id);
+  db.patients.push(p);saveDB(db);state.selectedPatient=p.id;state.newPatientId=p.id;showToast("Patient created successfully");navigate("profile",p.id);
 }
 
 function handlePrakriti(e){
@@ -389,10 +392,15 @@ function handleCase(e){
   c.chiefComplaint=fd.get("chiefComplaint").trim();c.symptoms=symptoms;c.history=fd.get("history").trim();c.observations=fd.get("observations").trim();c.diagnosis=fd.get("diagnosis").trim();c.treatment=fd.get("treatment").trim();c.followUp=fd.get("followUp")||"";
   c.updatedAt=new Date().toISOString();
   p.updatedAt=new Date().toISOString();
+  const existingFollowup=p.followUps.find(x=>x.caseId===c.id);
   if(c.followUp){
-    let f=p.followUps.find(x=>x.caseId===c.id);
-    if(!f){f={id:uid("f"),caseId:c.id};p.followUps.push(f);}
-    f.date=c.followUp;f.status="Upcoming";f.notes="Review symptoms and practitioner-entered management plan.";
+    let f=existingFollowup;
+    if(!f){f={id:uid("f"),caseId:c.id,status:"Upcoming"};p.followUps.push(f);}
+    f.date=c.followUp;
+    if(f.status!=="Completed") f.status="Upcoming";
+    f.notes="Review symptoms and practitioner-entered management plan.";
+  }else if(existingFollowup){
+    p.followUps=p.followUps.filter(x=>x.id!==existingFollowup.id);
   }
   c.summary=buildSummary(p,c);
   saveDB(db);state.selectedCaseId=c.id;state.editingCaseId=null;showToast("Case saved and summary generated");navigate("summary",p.id);
